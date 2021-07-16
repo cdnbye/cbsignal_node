@@ -1,0 +1,68 @@
+{
+  "name": "cbsignal.js",
+  "description": "High performance CDNBye signaling service",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "author": "Novage",
+  "homepage": "https://www.cdnbye.com",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "engines": {
+    "node": ">=10.0.0"
+  },
+  "bin": {
+    "cbsignal": "./bin/cbsignal"
+  },
+  "keywords": [
+    "p2p",
+    "peer-to-peer",
+    "webrtc",
+    "swarmcloud",
+    "signal",
+    "cdnbye",
+    "cbsignal",
+    "websockets"
+  ],
+  "scripts": {
+    "start": "node ./dist/run-uws-signal.js",
+    "build": "npm run lint && npm run clean && npm run compile",
+    "compile": "tsc",
+    "lint": "eslint -c .eslintrc.js --ext .ts -f visualstudio lib",
+    "clean": "rimraf dist",
+    "watch": "tsc --watch",
+    "test": "npm run test:clean && npm run test:compile && npm run test:run",
+    "test:run": "nyc mocha test_dist/**/*.test.js",
+    "test:compile": "tsc --project tsconfig.test.json",
+    "test:clean": "rimraf test_dist",
+    "test:coverage": "nyc report --reporter=lcov --reporter=text",
+    "test:coveralls": "nyc report --reporter=text-lcov | coveralls"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cdnbye/cbsignal.js.git"
+  },
+  "dependencies": {
+    "debug": "^4.1.1",
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v17.4.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.2.11",
+    "@types/debug": "^4.1.5",
+    "@types/mocha": "^7.0.2",
+    "@types/node": "^13.13.4",
+    "@types/ws": "^7.2.4",
+    "@typescript-eslint/eslint-plugin": "^2.30.0",
+    "@typescript-eslint/parser": "^2.30.0",
+    "chai": "^4.2.0",
+    "coveralls": "^3.1.0",
+    "eslint": "^6.8.0",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-prefer-arrow": "^1.2.0",
+    "mocha": "^7.1.2",
+    "nyc": "^15.0.1",
+    "rimraf": "^3.0.2",
+    "ts-mockito": "^2.5.0",
+    "typescript": "^3.8.3",
+    "ws": "^7.2.5"
+  }
+}
