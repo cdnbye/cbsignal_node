@@ -3,3 +3,5 @@
 /test_dist
 /coverage
 /.nyc_output
+.DS_Store
+/.idea
