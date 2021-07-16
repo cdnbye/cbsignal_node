@@ -135,9 +135,6 @@ function validateSettings(jsonSettings: UnknownObject): Settings | undefined {
         return undefined;
     }
 
-    // TODO 默认值
-
-
     return {
         servers: servers,
         signaler: jsonSettings.signaler,
@@ -182,12 +179,6 @@ function buildServer(
         (response: HttpResponse, request: HttpRequest) => {
             debugRequest(server, request);
 
-            // const swarms = signaler.swarms;
-            // let peersCount = 0;
-            // for (const swarm of swarms.values()) {
-            //     peersCount += swarm.peers.length;
-            // }
-
             const peersCount = signaler.peers.size;
 
             const serversStats = new Array<{ server: string; webSocketsCount: number }>();
@@ -202,9 +193,9 @@ function buildServer(
             if (signalerSettings) {
                 version = signalerSettings.version;
             }
-            let compressionEnabled: boolean = false;
-            if (serverSettings.websockets && serverSettings.websockets.compression) {
-                compressionEnabled = serverSettings.websockets.compression > 0;
+            let compressionEnabled: boolean = true;
+            if (serverSettings.websockets && serverSettings.websockets.compression === 0) {
+                compressionEnabled = false;
             }
             response.
                 writeHeader("Content-Type", "application/json").

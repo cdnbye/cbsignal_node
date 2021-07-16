@@ -260,10 +260,6 @@ export class UWebSocketsSignal {
             return;
         }
 
-        // if (ws.sendMessage === undefined) {
-        //     ws.sendMessage = sendMessage;
-        // }
-
         if (debugMessagesEnabled) {
             debugMessages(
                 "in",
