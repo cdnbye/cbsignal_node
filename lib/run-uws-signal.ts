@@ -32,7 +32,6 @@ export interface ServerItemSettings {
 
 export interface ServerSettings {
     port: number;
-    host: string;
     // eslint-disable-next-line camelcase
     key_file_name?: string;
     // eslint-disable-next-line camelcase
@@ -154,7 +153,7 @@ async function runServers(
             const server = buildServer(signaler, serverSettings, settings.websocketsAccess, signaler.settings, servers);
             servers.push(server);
             await server.run();
-            console.info(`listening ${server.settings.server.host}:${server.settings.server.port}`);
+            console.info(`listening ${server.settings.server.port}`);
         },
     );
 
@@ -185,7 +184,7 @@ function buildServer(
             for (const serverForStats of servers) {
                 const settings = serverForStats.settings;
                 serversStats.push({
-                    server: `${settings.server.host}:${settings.server.port}`,
+                    server: `${settings.server.port}`,
                     webSocketsCount: serverForStats.stats.webSocketsCount,
                 });
             }
@@ -240,7 +239,6 @@ function buildServer(
 function debugRequest(server: UWebSocketsSignal, request: HttpRequest): void {
     if (debugRequestsEnabled) {
         debugRequests(
-            server.settings.server.host,
             server.settings.server.port,
             "request method:",
             request.getMethod(),

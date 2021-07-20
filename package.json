@@ -1,9 +1,9 @@
 {
-  "name": "cbsignal.js",
+  "name": "cbsignal_node",
   "description": "High performance CDNBye signaling service",
-  "version": "0.0.1",
+  "version": "2.3.0",
   "license": "Apache-2.0",
-  "author": "Novage",
+  "author": "cdnbye",
   "homepage": "https://www.cdnbye.com",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -25,21 +25,13 @@
   ],
   "scripts": {
     "start": "node ./dist/run-uws-signal.js",
-    "build": "npm run lint && npm run clean && npm run compile",
     "compile": "tsc",
-    "lint": "eslint -c .eslintrc.js --ext .ts -f visualstudio lib",
     "clean": "rimraf dist",
-    "watch": "tsc --watch",
-    "test": "npm run test:clean && npm run test:compile && npm run test:run",
-    "test:run": "nyc mocha test_dist/**/*.test.js",
-    "test:compile": "tsc --project tsconfig.test.json",
-    "test:clean": "rimraf test_dist",
-    "test:coverage": "nyc report --reporter=lcov --reporter=text",
-    "test:coveralls": "nyc report --reporter=text-lcov | coveralls"
+    "watch": "tsc --watch"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/cdnbye/cbsignal.js.git"
+    "url": "https://github.com/cdnbye/cbsignal_node.git"
   },
   "dependencies": {
     "debug": "^4.1.1",

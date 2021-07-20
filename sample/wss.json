@@ -1,8 +1,7 @@
 {
   "servers": [{
       "server": {
-        "port": 8000,
-        "host": "0.0.0.0"
+        "port": 80
       },
       "websockets": {
         "path": "/*",
@@ -13,8 +12,7 @@
       }
     }, {
       "server": {
-        "port": 8433,
-        "host": "0.0.0.0",
+        "port": 443,
         "key_file_name": "misc/key.pem",
         "cert_file_name": "misc/cert.pem",
         "passphrase": "1234",
@@ -24,19 +22,9 @@
       "websockets": {
         "path": "/*",
         "maxPayloadLength": 65536,
-        "idleTimeout": 240,
-        "compression": 1
+        "idleTimeout": 300,
+        "compression": 0
       }
     }
-  ],
-
-  "signaler": {
-    "version": "2.2.0"
-  },
-
-  "websocketsAccess": {
-    "allowOrigins": ["https://xxx.com", "https://yyy.com"],
-    "denyOrigins": ["https://xxx.com", "https://yyy.com"],
-    "denyEmptyOrigin": true
-  }
+  ]
 }

@@ -58,15 +58,14 @@ export class UWebSocketsSignal {
     public constructor(public readonly signaler: Readonly<Signaling>, settings: PartialUwsSignalSettings) {
         this.settings = {
             server: {
-                port: 8000,
-                host: "0.0.0.0",
+                port: 80,
                 ...settings.server,
             },
             websockets: {
                 path: "/*",
                 maxPayloadLength: 64 * 1024,
-                idleTimeout: 240,
-                compression: 1,
+                idleTimeout: 300,
+                compression: 0,
                 maxConnections: 0,
                 ...settings.websockets,
             },
@@ -95,12 +94,11 @@ export class UWebSocketsSignal {
         await new Promise<void>(
             (resolve, reject) => {
                 this.#app.listen(
-                    // this.settings.server.host,
                     this.settings.server.port,
                     (token: false | object) => {
                         if (token === false) {
                             reject(new Error(
-                                `failed to listen to ${this.settings.server.host}:${this.settings.server.port}`,
+                                `failed to listen to ${this.settings.server.port}`,
                             ));
                         } else {
                             resolve();
@@ -163,10 +161,12 @@ export class UWebSocketsSignal {
     private readonly onOpen = (ws: WebSocket, request: HttpRequest): void => {
         this.webSocketsCount++;
 
+        // TODO token
+
+
         if ((this.maxConnections !== 0) && (this.webSocketsCount > this.maxConnections)) {
             if (debugRequestsEnabled) {
                 debugRequests(
-                    this.settings.server.host,
                     this.settings.server.port,
                     "ws-denied-max-connections url:",
                     request.getUrl(),
@@ -198,7 +198,6 @@ export class UWebSocketsSignal {
             if (shoulDeny) {
                 if (debugRequestsEnabled) {
                     debugRequests(
-                        this.settings.server.host,
                         this.settings.server.port,
                         "ws-denied url:",
                         request.getUrl(),
@@ -217,7 +216,6 @@ export class UWebSocketsSignal {
 
         if (debugRequestsEnabled) {
             debugRequests(
-                this.settings.server.host,
                 this.settings.server.port,
                 "ws-open url:",
                 request.getUrl(),

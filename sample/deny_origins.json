@@ -1,0 +1,19 @@
+{
+  "servers": [{
+    "server": {
+      "port": 8000
+    },
+    "websockets": {
+      "path": "/*",
+      "maxPayloadLength": 65536,
+      "idleTimeout": 240,
+      "compression": 1,
+      "maxConnections": 0
+    }
+  }],
+
+  "websocketsAccess": {
+    "denyOrigins": ["https://xxx.com", "https://yyy.com"],
+    "denyEmptyOrigin": true
+  }
+}
