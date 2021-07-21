@@ -7,7 +7,7 @@
         "path": "/*",
         "maxPayloadLength": 65536,
         "idleTimeout": 240,
-        "compression": 1,
+        "compression": false,
         "maxConnections": 0
       }
     }, {
@@ -17,13 +17,13 @@
         "cert_file_name": "misc/cert.pem",
         "passphrase": "1234",
         "dh_params_file_name": "misc/params.dh",
-        "ssl_prefer_low_memory_usage": true
+        "ssl_prefer_low_memory_usage": false
       },
       "websockets": {
         "path": "/*",
         "maxPayloadLength": 65536,
         "idleTimeout": 300,
-        "compression": 0
+        "compression": false
       }
     }
   ]

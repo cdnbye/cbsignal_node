@@ -47,7 +47,7 @@ export interface WebSocketsSettings {
     path: string;
     maxPayloadLength: number;
     idleTimeout: number;
-    compression: number;
+    compression: boolean;
     maxConnections: number;
 }
 
@@ -194,9 +194,9 @@ function buildServer(
             if (signalerSettings) {
                 version = signalerSettings.version;
             }
-            let compressionEnabled: boolean = true;
-            if (serverSettings.websockets && serverSettings.websockets.compression === 0) {
-                compressionEnabled = false;
+            let compressionEnabled: boolean = false;
+            if (serverSettings.websockets && serverSettings.websockets.compression === true) {
+                compressionEnabled = true;
             }
             response.
                 writeHeader("Content-Type", "application/json").

@@ -1,7 +1,7 @@
 
 import { StringDecoder } from "string_decoder";
 import * as QueryString from 'querystring';
-import { App, SSLApp, WebSocket, HttpRequest, TemplatedApp } from "uWebSockets.js";
+import { App, SSLApp, WebSocket, HttpRequest, TemplatedApp, DEDICATED_COMPRESSOR_3KB, DISABLED } from "uWebSockets.js";
 import * as Debug from "debug";
 import { Signaling, SignalError, PeerContext } from "./signaling";
 import { ServerSettings, WebSocketsSettings, WebSocketsAccessSettings } from "./run-uws-signal";
@@ -67,7 +67,7 @@ export class UWebSocketsSignal {
                 path: "/*",
                 maxPayloadLength: 64 * 1024,
                 idleTimeout: 300,
-                compression: 0,
+                compression: false,
                 maxConnections: 0,
                 ...settings.websockets,
             },
@@ -148,7 +148,7 @@ export class UWebSocketsSignal {
         this.#app.ws(
             this.settings.websockets.path,
             {
-                compression: this.settings.websockets.compression,
+                compression: this.settings.websockets.compression ? DEDICATED_COMPRESSOR_3KB : DISABLED,
                 maxPayloadLength: this.settings.websockets.maxPayloadLength,
                 idleTimeout: this.settings.websockets.idleTimeout,
                 open: this.onOpen,
