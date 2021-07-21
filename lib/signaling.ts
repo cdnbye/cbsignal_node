@@ -3,6 +3,7 @@ export interface PeerContext {
     id?: string;
     sendMessage: (json: object, peer: PeerContext) => void;
     ts?: number;
+    notFoundPeers?: string[];
 }
 
 export interface Signaling {

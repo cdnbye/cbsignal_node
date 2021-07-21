@@ -8,6 +8,8 @@ import { Signaling, PeerContext, SignalError } from "./signaling";
 const debug = Debug("wt-signaler:fast-signaler");
 const debugEnabled = debug.enabled;
 
+const MAX_NOT_FOUND_PEERS_LIMIT = 5
+
 interface UnknownObject {
     [key: string]: unknown;
 }
@@ -113,9 +115,19 @@ export class FastSignal implements Signaling {
                     toPeerId,
                 );
             }
+            if (peer.notFoundPeers === undefined) {
+                peer.notFoundPeers = [];
+            }
             json.from_peer_id = toPeerId;
             delete json.data;
-            peer.sendMessage(json, peer);
+
+            if (!peer.notFoundPeers.includes(toPeerId)) {
+                peer.notFoundPeers.push(toPeerId);
+                if (peer.notFoundPeers.length > MAX_NOT_FOUND_PEERS_LIMIT) {
+                    peer.notFoundPeers.shift();
+                }
+                peer.sendMessage(json, peer);
+            }
         } else {
             json.from_peer_id = peer.id;
             toPeer.sendMessage(json, toPeer);
