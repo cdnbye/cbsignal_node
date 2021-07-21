@@ -50,7 +50,7 @@ See [sample](sample)
 |servers.websockets.path|string|URL pattern for the WebSockets endpoint|
 |servers.websockets.maxPayloadLength|number|The maximum length of received message|
 |servers.websockets.idleTimeout|number|The maximum amount of seconds that may pass without sending or getting a message. Being idle for more than this, and the connection is severed.|
-|servers.websockets.compression|boolean|false = DISABLED, true = DEDICATED_COMPRESSOR_3KB (see [details](https://github.com/uNetworking/uWebSockets/blob/master/misc/READMORE.md#settings))|
+|servers.websockets.compression|boolean|false = DISABLED, true = SHARED_COMPRESSOR (see [details](https://github.com/uNetworking/uWebSockets/blob/master/misc/READMORE.md#settings))|
 |servers.websockets.maxConnections|number|The maximum number of WebSocket connections. 0 = no limit.|
 
 ## Run on Debug Mode

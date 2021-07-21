@@ -17,7 +17,7 @@
         "cert_file_name": "misc/cert.pem",
         "passphrase": "1234",
         "dh_params_file_name": "misc/params.dh",
-        "ssl_prefer_low_memory_usage": false
+        "ssl_prefer_low_memory_usage": true
       },
       "websockets": {
         "path": "/*",
