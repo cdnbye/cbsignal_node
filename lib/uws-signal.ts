@@ -5,6 +5,7 @@ import { App, SSLApp, WebSocket, HttpRequest, TemplatedApp } from "uWebSockets.j
 import * as Debug from "debug";
 import { Signaling, SignalError, PeerContext } from "./signaling";
 import { ServerSettings, WebSocketsSettings, WebSocketsAccessSettings } from "./run-uws-signal";
+const crypto = require('crypto');
 
 // eslint-disable-next-line new-cap
 const debugWebSockets = Debug("wt-signaler:uws-signaler");
@@ -43,6 +44,7 @@ export class UWebSocketsSignal {
 
     private webSocketsCount = 0;
     private validateOrigin = false;
+    private securityEnabled = false;
     private readonly maxConnections: number;
 
     public get app(): TemplatedApp {
@@ -73,11 +75,14 @@ export class UWebSocketsSignal {
                 allowOrigins: undefined,
                 denyOrigins: undefined,
                 denyEmptyOrigin: false,
+                maxTimeStampAge: 3600,
                 ...settings.access,
             },
         };
 
         this.maxConnections = this.settings.websockets.maxConnections;
+
+        if (this.settings.access.token) this.securityEnabled = true;
 
         this.validateAccess();
 
@@ -161,8 +166,70 @@ export class UWebSocketsSignal {
     private readonly onOpen = (ws: WebSocket, request: HttpRequest): void => {
         this.webSocketsCount++;
 
-        // TODO token
+        const query = QueryString.parse(request.getQuery());
+        if (debugRequestsEnabled) debugRequests("ws query id", query.id, "token", query.token);
 
+        // token
+        if (this.securityEnabled) {
+            const tokens = (query.token as string || '').split('-');
+            if (tokens.length < 2) {
+                if (debugRequestsEnabled) {
+                    debugRequests(
+                        this.settings.server.port,
+                        "ws-denied url:",
+                        request.getUrl(),
+                        "query:",
+                        request.getQuery(),
+                        "token:",
+                        query.token
+                    );
+                }
+                ws.close();
+                return;
+            }
+            const now = new Date().getTime()/1000;
+            const maxTimeStampAge = this.settings.access.maxTimeStampAge;
+            const sign = tokens[0];
+            const tsStr = tokens[1];
+            const ts = Number(tsStr);
+            if (ts<now-maxTimeStampAge || ts>now+maxTimeStampAge) {
+                if (debugRequestsEnabled) {
+                    debugRequests(
+                        this.settings.server.port,
+                        "ws-denied url:",
+                        request.getUrl(),
+                        "query:",
+                        request.getQuery(),
+                        "token:",
+                        query.token,
+                        "reason: ts expired for",
+                        now - ts
+                    );
+                }
+                ws.close();
+                return;
+            }
+            const hmac = crypto.createHmac('md5', this.settings.access.token);
+            const up = hmac.update(tsStr + query.id);
+            const realSign = (up.digest('hex') as string).substring(0, 8);
+            console.log(realSign);
+            if (sign !== realSign) {
+                if (debugRequestsEnabled) {
+                    debugRequests(
+                        this.settings.server.port,
+                        "ws-denied url:",
+                        request.getUrl(),
+                        "query:",
+                        request.getQuery(),
+                        "token:",
+                        query.token,
+                        "reason: token not match"
+                    );
+                }
+                ws.close();
+                return;
+            }
+        }
 
         if ((this.maxConnections !== 0) && (this.webSocketsCount > this.maxConnections)) {
             if (debugRequestsEnabled) {
@@ -232,8 +299,6 @@ export class UWebSocketsSignal {
             ws.sendMessage = sendMessage;
         }
 
-        const query = QueryString.parse(request.getQuery());
-        if (debugRequestsEnabled) debugRequests("ws query id", query.id);
         try {
             this.signaler.processJoin(query.id as string, ws as unknown as PeerContext);
         } catch (e) {

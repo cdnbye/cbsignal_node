@@ -1,6 +1,6 @@
 
-# cbsignal.js
-High performance CDNBye signaling service written in nodejs
+# About
+High performance CDNBye signaling service written in node.js
 
 ## Features
 
@@ -20,7 +20,7 @@ Node.js 10+ is required.
 
 ```sh
 npm install
-npm run build
+npm run compile
 ```
 
 ## Run instructions
@@ -43,7 +43,7 @@ npm start [config.json]
 
 ## Configuration
 
-See [config.json](sample/config.json)
+See [sample](sample)
 
 |Name|Type|Description|
 |----|----|-----------|

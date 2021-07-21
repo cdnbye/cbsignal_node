@@ -25,6 +25,7 @@
   ],
   "scripts": {
     "start": "node ./dist/run-uws-signal.js",
+    "debug": "DEBUG=* node ./dist/run-uws-signal.js",
     "compile": "tsc",
     "clean": "rimraf dist",
     "watch": "tsc --watch"
