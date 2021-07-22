@@ -1,0 +1,18 @@
+{
+  "servers": [{
+    "server": {
+      "port": 8000
+    },
+    "websockets": {
+      "path": "/*",
+      "maxPayloadLength": 65536,
+      "idleTimeout": 300,
+      "compression": false,
+      "maxConnections": 0
+    }
+  }],
+
+  "websocketsAccess": {
+    "limitRate": 100
+  }
+}

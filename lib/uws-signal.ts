@@ -6,6 +6,7 @@ import * as Debug from "debug";
 import { Signaling, SignalError, PeerContext } from "./signaling";
 import { ServerSettings, WebSocketsSettings, WebSocketsAccessSettings } from "./run-uws-signal";
 const crypto = require('crypto');
+import { RateLimiter } from "limiter";
 
 // eslint-disable-next-line new-cap
 const debugWebSockets = Debug("wt-signaler:uws-signaler");
@@ -45,6 +46,7 @@ export class UWebSocketsSignal {
     private webSocketsCount = 0;
     private validateOrigin = false;
     private securityEnabled = false;
+    private limiter?: RateLimiter;
     private readonly maxConnections: number;
 
     public get app(): TemplatedApp {
@@ -81,6 +83,9 @@ export class UWebSocketsSignal {
         };
 
         this.maxConnections = this.settings.websockets.maxConnections;
+        if (this.settings.access.limitRate) {
+            this.limiter = new RateLimiter({ tokensPerInterval: this.settings.access.limitRate, interval: "second" });
+        }
 
         if (this.settings.access.token) this.securityEnabled = true;
 
@@ -167,17 +172,39 @@ export class UWebSocketsSignal {
     private readonly onUpgrade = (res: HttpResponse, req: HttpRequest, context: us_socket_context_t): void => {
         // console.log('An Http connection wants to become WebSocket, URL: ' + req.getUrl() + '!');
 
+        // const upgradeAborted = {aborted: false};
+
+        /* You MUST copy data out of req here, as req is only valid within this immediate callback */
+        const url = req.getUrl();
+        const secWebSocketKey = req.getHeader('sec-websocket-key');
+        const secWebSocketProtocol = req.getHeader('sec-websocket-protocol');
+        const secWebSocketExtensions = req.getHeader('sec-websocket-extensions');
+        const query = req.getQuery();
+        const origin = req.getHeader("origin");
+
+        if (this.limiter && !this.limiter.tryRemoveTokens(1)) {
+            if (debugRequestsEnabled) {
+                debugRequests(
+                    this.settings.server.port,
+                    "ws-denied url:",
+                    url,
+                    "reason: reach rate limit"
+                );
+            } else {
+                console.log("reach rate limit");
+            }
+            res.close();
+            return;
+        }
+
         /* This immediately calls open handler, you must not use res after this call */
-        res.upgrade({
-                url: req.getUrl(),
-                query: req.getQuery(),
-                origin: req.getHeader("origin"),
-            },
+        res.upgrade({ url, query, origin },
             /* Spell these correctly */
-            req.getHeader('sec-websocket-key'),
-            req.getHeader('sec-websocket-protocol'),
-            req.getHeader('sec-websocket-extensions'),
+            secWebSocketKey,
+            secWebSocketProtocol,
+            secWebSocketExtensions,
             context);
+
     };
 
     private readonly onOpen = (ws: WebSocket): void => {

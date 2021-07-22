@@ -57,6 +57,7 @@ export interface WebSocketsAccessSettings {
     denyEmptyOrigin: boolean;
     maxTimeStampAge: number;
     token?: string;
+    limitRate?: number;
 }
 
 async function main(): Promise<void> {
