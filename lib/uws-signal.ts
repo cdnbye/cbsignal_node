@@ -190,8 +190,6 @@ export class UWebSocketsSignal {
                     url,
                     "reason: reach rate limit"
                 );
-            } else {
-                console.log("reach rate limit");
             }
             res.close();
             return;
