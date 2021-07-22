@@ -200,6 +200,7 @@ function buildServer(
             }
             response.
                 writeHeader("Content-Type", "application/json").
+                writeHeader("Access-Control-Allow-Origin", "*").
                 end(JSON.stringify({
                     version,
                     current_connections: peersCount,
@@ -212,6 +213,7 @@ function buildServer(
         (response: HttpResponse, request: HttpRequest) => {
             debugRequest(server, request);
             response.
+            writeHeader("Access-Control-Allow-Origin", "*").
             end(signaler.peers.size.toString());
         }
     ).get(
@@ -223,6 +225,7 @@ function buildServer(
                 version = signalerSettings.version;
             }
             response.
+            writeHeader("Access-Control-Allow-Origin", "*").
             end(version);
         }
     ).any(
