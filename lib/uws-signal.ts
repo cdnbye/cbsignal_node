@@ -256,7 +256,6 @@ export class UWebSocketsSignal {
             const hmac = crypto.createHmac('md5', this.settings.access.token);
             const up = hmac.update(tsStr + query.id);
             const realSign = (up.digest('hex') as string).substring(0, 8);
-            console.log(realSign);
             if (sign !== realSign) {
                 if (debugRequestsEnabled) {
                     debugRequests(
