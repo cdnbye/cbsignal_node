@@ -1,6 +1,6 @@
 
 import { StringDecoder } from "string_decoder";
-import * as QueryString from 'querystring';
+// import * as QueryString from 'querystring';
 import { App, SSLApp, WebSocket, us_socket_context_t, HttpResponse, HttpRequest, TemplatedApp, SHARED_COMPRESSOR, DISABLED } from "uWebSockets.js";
 import * as Debug from "debug";
 import { Signaling, SignalError, PeerContext } from "./signaling";
@@ -9,18 +9,15 @@ const crypto = require('crypto');
 import { RateLimiter } from "limiter";
 
 // eslint-disable-next-line new-cap
-const debugWebSockets = Debug("wt-signaler:uws-signaler");
-// debugWebSockets.enabled = true;
+const debugWebSockets = Debug("cbsignal:uws-signaler");
 const debugWebSocketsEnabled = debugWebSockets.enabled;
 
 // eslint-disable-next-line new-cap
-const debugMessages = Debug("wt-signaler:uws-signaler-messages");
-// debugMessages.enabled = true;
+const debugMessages = Debug("cbsignal:uws-signaler-messages");
 const debugMessagesEnabled = debugMessages.enabled;
 
 // eslint-disable-next-line new-cap
-const debugRequests = Debug("wt-signaler:uws-signaler-requests");
-// debugRequests.enabled = true;
+const debugRequests = Debug("cbsignal:uws-signaler-requests");
 const debugRequestsEnabled = debugRequests.enabled;
 
 const decoder = new StringDecoder();
@@ -70,7 +67,7 @@ export class UWebSocketsSignal {
                 maxPayloadLength: 64 * 1024,
                 idleTimeout: 300,
                 compression: false,
-                maxConnections: 0,
+                maxConnections: 0,            // unlimited
                 ...settings.websockets,
             },
             access: {
@@ -179,7 +176,9 @@ export class UWebSocketsSignal {
         const secWebSocketKey = req.getHeader('sec-websocket-key');
         const secWebSocketProtocol = req.getHeader('sec-websocket-protocol');
         const secWebSocketExtensions = req.getHeader('sec-websocket-extensions');
-        const query = req.getQuery();
+        // const query = req.getQuery();
+        const id = req.getQuery("id");
+        const token = req.getQuery("token");
         const origin = req.getHeader("origin");
 
         if (this.limiter && !this.limiter.tryRemoveTokens(1)) {
@@ -196,7 +195,7 @@ export class UWebSocketsSignal {
         }
 
         /* This immediately calls open handler, you must not use res after this call */
-        res.upgrade({ url, query, origin },
+        res.upgrade({ url, query: {id, token}, origin },
             /* Spell these correctly */
             secWebSocketKey,
             secWebSocketProtocol,
@@ -208,9 +207,8 @@ export class UWebSocketsSignal {
     private readonly onOpen = (ws: WebSocket): void => {
         this.webSocketsCount++;
         const url = ws.url;
-        const queryStr = ws.query;
         const origin = ws.origin;
-        const query = QueryString.parse(queryStr);
+        const query = ws.query;
         if (debugRequestsEnabled) debugRequests("ws query id", query.id, "token", query.token);
 
         // token
@@ -222,8 +220,6 @@ export class UWebSocketsSignal {
                         this.settings.server.port,
                         "ws-denied url:",
                         url,
-                        "query:",
-                        queryStr,
                         "token:",
                         query.token
                     );
@@ -242,8 +238,6 @@ export class UWebSocketsSignal {
                         this.settings.server.port,
                         "ws-denied url:",
                         url,
-                        "query:",
-                        queryStr,
                         "token:",
                         query.token,
                         "reason: ts expired for",
@@ -262,8 +256,6 @@ export class UWebSocketsSignal {
                         this.settings.server.port,
                         "ws-denied url:",
                         url,
-                        "query:",
-                        queryStr,
                         "token:",
                         query.token,
                         "reason: token not match"
@@ -280,8 +272,6 @@ export class UWebSocketsSignal {
                     this.settings.server.port,
                     "ws-denied-max-connections url:",
                     url,
-                    "query:",
-                    queryStr,
                     "origin:",
                     origin,
                     "total:",
@@ -310,8 +300,6 @@ export class UWebSocketsSignal {
                         this.settings.server.port,
                         "ws-denied url:",
                         url,
-                        "query:",
-                        queryStr,
                         "origin:",
                         origin,
                         "total:",
@@ -328,8 +316,6 @@ export class UWebSocketsSignal {
                 this.settings.server.port,
                 "ws-open url:",
                 url,
-                "query:",
-                queryStr,
                 "origin:",
                 origin,
                 "total:",
@@ -351,6 +337,7 @@ export class UWebSocketsSignal {
                 throw e;
             }
         }
+
     };
 
     private readonly onMessage = (ws: WebSocket, message: ArrayBuffer): void => {

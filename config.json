@@ -6,7 +6,6 @@
     "websockets": {
       "path": "/*",
       "maxPayloadLength": 65536,
-      "idleTimeout": 300,
       "compression": false,
       "maxConnections": 0
     }

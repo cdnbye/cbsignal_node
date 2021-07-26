@@ -6,9 +6,10 @@ import * as Debug from "debug";
 import { UWebSocketsSignal } from "./uws-signal";
 import { FastSignal } from "./fast-signal";
 import { Signaling } from "./signaling";
+import Cluster from "./cluster";
 
 // eslint-disable-next-line new-cap
-const debugRequests = Debug("wt-signaler:uws-signaler-requests");
+const debugRequests = Debug("cbsignal:uws-signaler-requests");
 const debugRequestsEnabled = debugRequests.enabled;
 
 interface UnknownObject {
@@ -19,6 +20,7 @@ export interface Settings {
     servers: ServerItemSettings[];
     signaler?: Partial<SignalerSettings>;
     websocketsAccess?: Partial<WebSocketsAccessSettings>;
+    cluster? : ClusterSettings;
 }
 
 export interface SignalerSettings {
@@ -58,6 +60,20 @@ export interface WebSocketsAccessSettings {
     maxTimeStampAge: number;
     token?: string;
     limitRate?: number;
+}
+
+export interface ClusterSettings {
+    enabled?: boolean;
+    ip?: string,
+    port?: string,
+    nodes?: NodeSettings[];
+    maxRetries?: number;
+}
+
+export interface NodeSettings {
+    ip: string;
+    port: number;
+    enabled: boolean;
 }
 
 async function main(): Promise<void> {
@@ -137,10 +153,16 @@ function validateSettings(jsonSettings: UnknownObject): Settings | undefined {
         return undefined;
     }
 
+    if ((jsonSettings.cluster !== undefined) && !(jsonSettings.cluster instanceof Object)) {
+        console.error("failed to parse JSON configuration file: 'cluster' property should be an object");
+        return undefined;
+    }
+
     return {
         servers: servers,
         signaler: jsonSettings.signaler,
         websocketsAccess: jsonSettings.websocketsAccess,
+        cluster: jsonSettings.cluster,
     };
 }
 
@@ -153,7 +175,7 @@ async function runServers(
 
     const serverPromises = settings.servers.map(
         async (serverSettings) => {
-            const server = buildServer(signaler, serverSettings, settings.websocketsAccess, signaler.settings, servers);
+            const server = buildServer(signaler, serverSettings, settings.websocketsAccess, signaler.settings, servers, settings.cluster);
             servers.push(server);
             await server.run();
             console.info(`listening ${server.settings.server.port}`);
@@ -169,6 +191,7 @@ function buildServer(
     websocketsAccess: Partial<WebSocketsAccessSettings> | undefined,
     signalerSettings: Partial<SignalerSettings> | undefined,
     servers: UWebSocketsSignal[],
+    clusterSettings: ClusterSettings | undefined,
 ): UWebSocketsSignal {
     if (!(serverSettings instanceof Object)) {
         throw Error("failed to parse JSON configuration file: 'servers' property should be an array of objects");
@@ -176,7 +199,47 @@ function buildServer(
 
     const server = new UWebSocketsSignal(signaler, { ...serverSettings, access: websocketsAccess });
 
-    server.app.get(
+    let cluster: Cluster;
+    if (clusterSettings && clusterSettings.enabled && clusterSettings.ip && clusterSettings.port) {
+        console.log(`cluster mode`);
+        cluster = new Cluster(signaler as FastSignal, clusterSettings);
+    }
+
+    server.app
+    .post(
+        "/cluster",
+        (response: HttpResponse, request: HttpRequest) => {
+            if (!cluster) {
+                const status = "404 Not Found";
+                response.writeStatus(status).end(status);
+                return;
+            }
+            const hostName = request.getQuery('host');
+            const action = request.getQuery('action');
+            if (action === 'peer_join') {
+                cluster.processPeerJoin(hostName, request.getQuery('peer_id'));
+                response.end();
+            } else if (action === 'peer_leave') {
+                cluster.processPeerLeave(hostName, request.getQuery('peer_id'));
+                response.end();
+            } else if (action === 'peer_message') {
+                // console.log(`receive node peer_message ${hostName}`);
+                readJson(response, (json => {
+                    cluster.processPeerMessage(hostName, json);
+                    response.end();
+                }), ()=> {
+                    console.error('readJson error');
+                    response.end();
+                })
+            } else if (action === 'ping') {
+                // console.log(`receive node ping ${hostName}`);
+                response.end();
+            } else if (action === 'register') {
+                // console.log(`receive node register ${hostName}`);
+                response.end();
+            }
+        }
+    ).get(
         "/info",
         (response: HttpResponse, request: HttpRequest) => {
             debugRequest(server, request);
@@ -266,3 +329,43 @@ async function run(): Promise<void> {
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 run();
+
+/* Helper function for reading a posted JSON body */
+function readJson(res: HttpResponse, cb: (json: any) => void, err: () => void) {
+    let buffer: Uint8Array;
+    /* Register data cb */
+    res.onData((ab: ArrayBuffer, isLast: boolean) => {
+        let chunk = Buffer.from(ab);
+        if (isLast) {
+            let json;
+            if (buffer) {
+                try {
+                    json = JSON.parse(Buffer.concat([buffer, chunk]).toString());
+                } catch (e) {
+                    /* res.close calls onAborted */
+                    res.close();
+                    return;
+                }
+                cb(json);
+            } else {
+                try {
+                    json = JSON.parse(chunk.toString());
+                } catch (e) {
+                    /* res.close calls onAborted */
+                    res.close();
+                    return;
+                }
+                cb(json);
+            }
+        } else {
+            if (buffer) {
+                buffer = Buffer.concat([buffer, chunk]);
+            } else {
+                buffer = Buffer.concat([chunk]);
+            }
+        }
+    });
+
+    /* Register error cb */
+    res.onAborted(err);
+}

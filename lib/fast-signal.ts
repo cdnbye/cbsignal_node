@@ -3,12 +3,15 @@
 
 import * as Debug from "debug";
 import { Signaling, PeerContext, SignalError } from "./signaling";
+import RemotePeer from './remote-peer';
+import { EventEmitter } from 'events';
 
 // eslint-disable-next-line new-cap
-const debug = Debug("wt-signaler:fast-signaler");
+const debug = Debug("cbsignal:fast-signaler");
 const debugEnabled = debug.enabled;
 
-const MAX_NOT_FOUND_PEERS_LIMIT = 5
+const SIGNAL_VERSION = "2.4.0";
+const MAX_NOT_FOUND_PEERS_LIMIT = 5;
 
 interface UnknownObject {
     [key: string]: unknown;
@@ -18,9 +21,9 @@ interface Settings {
     version: string;
 }
 
-export class FastSignal implements Signaling {
+export class FastSignal extends EventEmitter implements Signaling {
     public readonly settings: Settings;
-
+    public host?: string;
     // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
     // readonly #swarms = new Map<string, Swarm>();
     // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
@@ -29,8 +32,9 @@ export class FastSignal implements Signaling {
     private readonly versionNum: number;
 
     public constructor(settings?: Partial<Settings>) {
+        super();
         this.settings = {
-            version: "2.3.0",
+            version: SIGNAL_VERSION,
             ...settings,
         };
 
@@ -46,8 +50,34 @@ export class FastSignal implements Signaling {
         return this.#peers;
     }
 
+    public addRemotePeer(nodeId: string, peerId: string): void {
+        if (!this.host) {
+            console.error(`addRemotePeer localhost is undefined`);
+            return;
+        }
+        const remotePeer = new RemotePeer(nodeId, peerId, this.host);
+        this.#peers.set(peerId, remotePeer);
+    }
+
+    public removeRemotePeer(peerId: string): void {
+        this.#peers.delete(peerId);
+    }
+
+    public clearPeersFromNode(nodeId: string) {
+        for (let [peerId, peer] of this.#peers) {
+            if (!peer.local && (peer as RemotePeer).host === nodeId) {
+                this.#peers.delete(peerId);
+                if (debugEnabled) {
+                    debug(`delete remote peer ${peerId}`);
+                }
+
+            }
+        }
+    }
+
     public processJoin(peerId: string, peer: PeerContext): void {
         peer.id = peerId;
+        peer.local = true;
         const oldPeer = this.#peers.get(peerId);
         if (oldPeer !== undefined) {
             if (debugEnabled) {
@@ -62,6 +92,8 @@ export class FastSignal implements Signaling {
             action: "ver",
             ver: this.versionNum,
         }, peer);
+
+        this.emit('peer_join', peerId)
     }
 
     public processMessage(jsonObject: object, peer: PeerContext): void {
@@ -100,13 +132,15 @@ export class FastSignal implements Signaling {
 
         this.#peers.delete(peerId);
         peer.id = undefined;
+
+        this.emit('peer_leave', peerId)
     }
 
     private processSignal(json: UnknownObject, peer: PeerContext): void {
         const toPeerId = json.to_peer_id as string;
+        // console.log(`processSignal toPeerId ${toPeerId}`);
         const toPeer = this.#peers.get(toPeerId);
 
-        delete json.to_peer_id;
         if (toPeer === undefined) {
             // throw new SignalError("answer: to_peer_id is not in the swarm");
             if (debugEnabled) {
@@ -120,15 +154,19 @@ export class FastSignal implements Signaling {
             }
             json.from_peer_id = toPeerId;
             delete json.data;
+            delete json.to_peer_id;
 
             if (!peer.notFoundPeers.includes(toPeerId)) {
                 peer.notFoundPeers.push(toPeerId);
                 if (peer.notFoundPeers.length > MAX_NOT_FOUND_PEERS_LIMIT) {
                     peer.notFoundPeers.shift();
                 }
-                peer.sendMessage(json, peer);
+                if (peer.local) peer.sendMessage(json, peer);
             }
         } else {
+            if (toPeer.local) {
+                delete json.to_peer_id;
+            }
             json.from_peer_id = peer.id;
             toPeer.sendMessage(json, toPeer);
 
@@ -137,11 +175,11 @@ export class FastSignal implements Signaling {
                     peer.id,
                     "send signal to",
                     toPeerId,
+                    "local:",
+                    toPeer.local
                 );
             }
         }
-
-
     }
 
     private processPing(json: UnknownObject, peer: PeerContext): void {
@@ -161,9 +199,21 @@ export class FastSignal implements Signaling {
         const toPeerId = json.to_peer_id as string;
         const toPeer = this.#peers.get(toPeerId);
         json.from_peer_id = peer.id;
-        delete json.to_peer_id;
-        if (toPeer !== undefined) {
-            toPeer.sendMessage(json, toPeer);
+        if (toPeer !== undefined && peer.id) {
+            if (toPeer.notFoundPeers === undefined) {
+                toPeer.notFoundPeers = [];
+            }
+            if (toPeer.local) {
+                delete json.to_peer_id;
+            }
+            if (!toPeer.notFoundPeers.includes(peer.id)) {
+                toPeer.notFoundPeers.push(peer.id);
+                if (toPeer.notFoundPeers.length > MAX_NOT_FOUND_PEERS_LIMIT) {
+                    toPeer.notFoundPeers.shift();
+                }
+                toPeer.sendMessage(json, toPeer);
+            }
+
         }
 
         if (debugEnabled) {

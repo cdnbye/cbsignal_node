@@ -1,5 +1,6 @@
 
 export interface PeerContext {
+    local?: boolean;
     id?: string;
     sendMessage: (json: object, peer: PeerContext) => void;
     ts?: number;
@@ -13,6 +14,8 @@ export interface Signaling {
     processJoin: (is: string, peer: PeerContext) => void;
     processMessage: (json: object, peer: PeerContext) => void;
     disconnectPeer: (peer: PeerContext) => void;
+    addRemotePeer: (nodeId: string, peerId: string) => void;
+    removeRemotePeer: (peerId: string) => void;
 }
 
 export class SignalError extends Error { }

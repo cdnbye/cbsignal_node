@@ -10,8 +10,16 @@
       "maxConnections": 0
     }
   }],
-
-  "websocketsAccess": {
-    "limitRate": 100
+  "cluster": {
+    "enabled": true,
+    "ip": "127.0.0.1",
+    "port": 8000,
+    "nodes": [
+      {
+        "enabled": true,
+        "ip": "127.0.0.1",
+        "port": 8001
+      }
+    ]
   }
 }
