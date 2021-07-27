@@ -171,11 +171,17 @@ async function runServers(
     settings: Settings,
 ): Promise<void> {
 
+    let cluster: Cluster;
+    if (settings.cluster && settings.cluster.enabled && settings.cluster.ip && settings.cluster.port) {
+        console.log(`cluster mode`);
+        cluster = new Cluster(signaler as FastSignal, settings.cluster);
+    }
+
     const servers: UWebSocketsSignal[] = [];
 
     const serverPromises = settings.servers.map(
         async (serverSettings) => {
-            const server = buildServer(signaler, serverSettings, settings.websocketsAccess, signaler.settings, servers, settings.cluster);
+            const server = buildServer(signaler, serverSettings, settings.websocketsAccess, signaler.settings, servers, cluster);
             servers.push(server);
             await server.run();
             console.info(`listening ${server.settings.server.port}`);
@@ -191,19 +197,13 @@ function buildServer(
     websocketsAccess: Partial<WebSocketsAccessSettings> | undefined,
     signalerSettings: Partial<SignalerSettings> | undefined,
     servers: UWebSocketsSignal[],
-    clusterSettings: ClusterSettings | undefined,
+    cluster: Cluster | undefined,
 ): UWebSocketsSignal {
     if (!(serverSettings instanceof Object)) {
         throw Error("failed to parse JSON configuration file: 'servers' property should be an array of objects");
     }
 
     const server = new UWebSocketsSignal(signaler, { ...serverSettings, access: websocketsAccess });
-
-    let cluster: Cluster;
-    if (clusterSettings && clusterSettings.enabled && clusterSettings.ip && clusterSettings.port) {
-        console.log(`cluster mode`);
-        cluster = new Cluster(signaler as FastSignal, clusterSettings);
-    }
 
     server.app
     .post(
