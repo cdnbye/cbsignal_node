@@ -311,6 +311,12 @@ export class UWebSocketsSignal {
             }
         }
 
+        if (this.signaler.peers.has(query.id)) {
+            debugWebSockets(`${query.id} is already exist`);
+            ws.close();
+            return;
+        }
+
         if (debugRequestsEnabled) {
             debugRequests(
                 this.settings.server.port,

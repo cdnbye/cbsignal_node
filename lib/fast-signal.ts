@@ -78,13 +78,13 @@ export class FastSignal extends EventEmitter implements Signaling {
     public processJoin(peerId: string, peer: PeerContext): void {
         peer.id = peerId;
         peer.local = true;
-        const oldPeer = this.#peers.get(peerId);
-        if (oldPeer !== undefined) {
-            if (debugEnabled) {
-                debug("oldPeer !== undefined");
-            }
-            this.disconnectPeer(oldPeer);
-        }
+        // const oldPeer = this.#peers.get(peerId);
+        // if (oldPeer !== undefined) {
+        //     if (debugEnabled) {
+        //         debug("oldPeer !== undefined");
+        //     }
+        //     this.disconnectPeer(oldPeer);
+        // }
 
         this.#peers.set(peerId, peer);
 
