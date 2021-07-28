@@ -209,13 +209,15 @@ function buildServer(
     .post(
         "/cluster",
         (response: HttpResponse, request: HttpRequest) => {
-            if (!cluster) {
+            const hostName = request.getQuery('host');
+            const action = request.getQuery('action');
+
+            if (!cluster || !hostName) {
                 const status = "404 Not Found";
                 response.writeStatus(status).end(status);
                 return;
             }
-            const hostName = request.getQuery('host');
-            const action = request.getQuery('action');
+
             if (action === 'peer_join') {
                 cluster.processPeerJoin(hostName, request.getQuery('peer_id'));
                 response.end();
@@ -237,6 +239,11 @@ function buildServer(
             } else if (action === 'register') {
                 // console.log(`receive node register ${hostName}`);
                 response.end();
+            } else {
+                console.log(`unknown action ${action}`);
+                const status = "404 Not Found";
+                response.writeStatus(status).end(status);
+                return;
             }
         }
     ).get(

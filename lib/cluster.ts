@@ -113,7 +113,7 @@ export default class Cluster {
     }
 
     private async registerNode(host: string) {
-        const address = `http://${host}/cluster?action=register`;
+        const address = `http://${host}/cluster?action=register&host=${this.host}`;
         const intervalId = setInterval(async () => {
             // console.log(`register ${address}`);
             try {
@@ -132,7 +132,7 @@ export default class Cluster {
     }
 
     private startPing(host: string) {
-        const address = `http://${host}/cluster?action=ping`;
+        const address = `http://${host}/cluster?action=ping&host=${this.host}`;
         let count = 0;
         const intervalId = setInterval(async () => {
             debug(`ping ${host}`);
