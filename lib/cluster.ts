@@ -135,7 +135,7 @@ export default class Cluster {
         const address = `http://${host}/cluster?action=ping`;
         let count = 0;
         const intervalId = setInterval(async () => {
-            // console.log(`ping ${host}`);
+            debug(`ping ${host}`);
             try {
                 await fetch(address, {method: 'POST', timeout: 2000});
                 count = 0;

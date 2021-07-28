@@ -11,7 +11,7 @@ const debug = Debug("cbsignal:fast-signaler");
 const debugEnabled = debug.enabled;
 
 const SIGNAL_VERSION = "2.4.0";
-const MAX_NOT_FOUND_PEERS_LIMIT = 5;
+const MAX_NOT_FOUND_PEERS_LIMIT = 3;
 
 interface UnknownObject {
     [key: string]: unknown;
@@ -55,7 +55,7 @@ export class FastSignal extends EventEmitter implements Signaling {
             console.error(`addRemotePeer localhost is undefined`);
             return;
         }
-        const remotePeer = new RemotePeer(nodeId, peerId, this.host);
+        const remotePeer = new RemotePeer(nodeId, peerId);
         this.#peers.set(peerId, remotePeer);
     }
 
@@ -91,7 +91,7 @@ export class FastSignal extends EventEmitter implements Signaling {
         peer.sendMessage({
             action: "ver",
             ver: this.versionNum,
-        }, peer);
+        }, peer, this.host);
 
         this.emit('peer_join', peerId)
     }
@@ -168,7 +168,7 @@ export class FastSignal extends EventEmitter implements Signaling {
                 delete json.to_peer_id;
             }
             json.from_peer_id = peer.id;
-            toPeer.sendMessage(json, toPeer);
+            toPeer.sendMessage(json, toPeer, this.host);
 
             if (debugEnabled) {
                 debug(
@@ -211,7 +211,7 @@ export class FastSignal extends EventEmitter implements Signaling {
                 if (toPeer.notFoundPeers.length > MAX_NOT_FOUND_PEERS_LIMIT) {
                     toPeer.notFoundPeers.shift();
                 }
-                toPeer.sendMessage(json, toPeer);
+                toPeer.sendMessage(json, toPeer, this.host);
             }
 
         }

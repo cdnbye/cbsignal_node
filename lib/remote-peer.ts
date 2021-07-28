@@ -5,17 +5,15 @@ export default class RemotePeer implements PeerContext {
     public readonly id: string;
     public readonly local: boolean;
     public readonly host: string;
-    public readonly localHost: string;
-    public constructor(host: string, id: string, localHost: string) {
+    public constructor(host: string, id: string) {
         this.id = id;
         this.local = false;
         this.host = host;
-        this.localHost = localHost;
     }
 
-    public async sendMessage(json: object, peer: PeerContext) {
-        // console.log(`sendMessage to ${peer.id} host ${this.localHost}`);
-        let address = `http://${this.host}/cluster?action=peer_message&host=${this.localHost}`;
+    public async sendMessage(json: object, peer: PeerContext, localHost?: string) {
+        // console.log(`sendMessage to ${peer.id} host ${localHost}`);
+        let address = `http://${this.host}/cluster?action=peer_message&host=${localHost}`;
         try {
             await fetch(address, {
                 method: 'POST',

@@ -2,7 +2,7 @@
 export interface PeerContext {
     local?: boolean;
     id?: string;
-    sendMessage: (json: object, peer: PeerContext) => void;
+    sendMessage: (json: object, peer: PeerContext, localHost?: string) => void;
     ts?: number;
     notFoundPeers?: string[];
 }
