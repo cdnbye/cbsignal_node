@@ -63,33 +63,3 @@ sudo npm install pm2 -g
 pm2 start pm2.config.js
 ```
 
-## Run on Cluster Mode
-Edit the config.json of all servers in cluster:
-```json
-{
-  "servers": [{
-    "server": {
-      "port": THIS_PORT
-    },
-    "websockets": {
-      "path": "/*",
-      "maxPayloadLength": 65536,
-      "compression": false,
-      "maxConnections": 0
-    }
-  }],
-  "cluster": {
-    "enabled": true,
-    "ip": THIS_IP,
-    "port": THIS_PORT,
-    "nodes": [
-      {
-        "enabled": true,
-        "ip": REMOTE_IP,
-        "port": REMOTE_PORT
-      },
-      ...
-    ]
-  }
-}
-```

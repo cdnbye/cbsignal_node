@@ -27,8 +27,6 @@
     "start": "node ./dist/run-uws-signal.js",
     "compile": "tsc",
     "debug": "DEBUG=* node ./dist/run-uws-signal.js",
-    "debug_node1": "DEBUG=* node ./dist/run-uws-signal.js config1.json",
-    "debug_node2": "DEBUG=* node ./dist/run-uws-signal.js config2.json",
     "upgrade": "git pull && npm rum compile && pm2 restart pm2.config.js",
     "clean": "rimraf dist",
     "watch": "tsc --watch"
