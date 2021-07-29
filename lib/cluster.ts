@@ -3,6 +3,7 @@ import ClusterNode from './cluster-node';
 import fetch from 'node-fetch';
 import { FastSignal } from './fast-signal';
 import * as Debug from "debug";
+import { App, HttpResponse, HttpRequest, TemplatedApp} from "uWebSockets.js";
 
 // eslint-disable-next-line new-cap
 const debug = Debug("cbsignal:cluster");
@@ -16,6 +17,7 @@ export default class Cluster {
     public readonly host: string;
     public readonly nodes: Map<string, ClusterNode>;
     private signaler: FastSignal;
+    readonly #app: TemplatedApp;
     public constructor(signaler: FastSignal, settings: ClusterSettings) {
         this.settings = {
             maxRetries: 5,
@@ -34,6 +36,72 @@ export default class Cluster {
         this.signaler.on('peer_leave', peerId => {
             this.broadcastPeerLeave(peerId);
         });
+
+        this.#app = App();
+        this.#app.post(
+            "/cluster",
+            (response: HttpResponse, request: HttpRequest) => {
+                const hostName = request.getQuery('host');
+                const action = request.getQuery('action');
+
+                if (!hostName) {
+                    const status = "404 Not Found";
+                    response.writeStatus(status).end(status);
+                    return;
+                }
+
+                if (action === 'peer_join') {
+                    this.processPeerJoin(hostName, request.getQuery('peer_id'));
+                    response.end();
+                } else if (action === 'peer_leave') {
+                    this.processPeerLeave(hostName, request.getQuery('peer_id'));
+                    response.end();
+                } else if (action === 'peer_message') {
+                    // console.log(`receive node peer_message ${hostName}`);
+                    readJson(response, (json => {
+                        this.processPeerMessage(hostName, json);
+                        response.end();
+                    }), ()=> {
+                        console.error('readJson error');
+                        response.end();
+                    })
+                } else if (action === 'ping') {
+                    // console.log(`receive node ping ${hostName}`);
+                    response.end();
+                } else if (action === 'register') {
+                    // console.log(`receive node register ${hostName}`);
+                    response.end();
+                } else {
+                    console.log(`unknown action ${action}`);
+                    const status = "404 Not Found";
+                    response.writeStatus(status).end(status);
+                    return;
+                }
+            }
+        )
+    }
+
+    public async run(): Promise<void> {
+        await new Promise<void>(
+            (resolve, reject) => {
+                this.#app.listen(
+                    this.settings.port!,
+                    (token: false | object) => {
+                        if (token === false) {
+                            reject(new Error(
+                                `failed to listen to ${this.settings.port}`,
+                            ));
+                        } else {
+                            resolve();
+                        }
+                    },
+                );
+            },
+        );
+    }
+
+    public get app(): TemplatedApp {
+        return this.#app;
     }
 
     public processPeerMessage(host: string, json: any) {
@@ -96,9 +164,7 @@ export default class Cluster {
 
     private addNode(nodeId: string) {
         if (this.nodes.has(nodeId)) return;
-        if (debugEnabled) {
-            debug(`addNode ${nodeId}`);
-        }
+        console.log(`addNode ${nodeId}`);
         const node = new ClusterNode(nodeId, this.host);
         this.nodes.set(nodeId, node);
     }
@@ -117,7 +183,7 @@ export default class Cluster {
         const intervalId = setInterval(async () => {
             // console.log(`register ${address}`);
             try {
-                const response = await fetch(address, {method: 'POST', timeout: 2000});
+                const response = await fetch(address, {method: 'POST', timeout: 5000});
                 // console.log(`${address} statusCode ${response.status}`);
                 clearInterval(intervalId);
                 if (response.status === 200) {
@@ -150,5 +216,45 @@ export default class Cluster {
             }
         }, PING_INTERVAL);
     }
+}
+
+/* Helper function for reading a posted JSON body */
+function readJson(res: HttpResponse, cb: (json: any) => void, err: () => void) {
+    let buffer: Uint8Array;
+    /* Register data cb */
+    res.onData((ab: ArrayBuffer, isLast: boolean) => {
+        let chunk = Buffer.from(ab);
+        if (isLast) {
+            let json;
+            if (buffer) {
+                try {
+                    json = JSON.parse(Buffer.concat([buffer, chunk]).toString());
+                } catch (e) {
+                    /* res.close calls onAborted */
+                    res.close();
+                    return;
+                }
+                cb(json);
+            } else {
+                try {
+                    json = JSON.parse(chunk.toString());
+                } catch (e) {
+                    /* res.close calls onAborted */
+                    res.close();
+                    return;
+                }
+                cb(json);
+            }
+        } else {
+            if (buffer) {
+                buffer = Buffer.concat([buffer, chunk]);
+            } else {
+                buffer = Buffer.concat([chunk]);
+            }
+        }
+    });
+
+    /* Register error cb */
+    res.onAborted(err);
 }
 

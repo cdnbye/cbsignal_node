@@ -65,7 +65,7 @@ export interface WebSocketsAccessSettings {
 export interface ClusterSettings {
     enabled?: boolean;
     ip?: string,
-    port?: string,
+    port?: number,
     nodes?: NodeSettings[];
     maxRetries?: number;
 }
@@ -175,6 +175,12 @@ async function runServers(
     if (settings.cluster && settings.cluster.enabled && settings.cluster.ip && settings.cluster.port) {
         console.log(`cluster mode`);
         cluster = new Cluster(signaler as FastSignal, settings.cluster);
+        try {
+            await cluster.run();
+            console.log(`cluster listening at port ${settings.cluster.port}`);
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     const servers: UWebSocketsSignal[] = [];
@@ -206,47 +212,7 @@ function buildServer(
     const server = new UWebSocketsSignal(signaler, { ...serverSettings, access: websocketsAccess });
 
     server.app
-    .post(
-        "/cluster",
-        (response: HttpResponse, request: HttpRequest) => {
-            const hostName = request.getQuery('host');
-            const action = request.getQuery('action');
-
-            if (!cluster || !hostName) {
-                const status = "404 Not Found";
-                response.writeStatus(status).end(status);
-                return;
-            }
-
-            if (action === 'peer_join') {
-                cluster.processPeerJoin(hostName, request.getQuery('peer_id'));
-                response.end();
-            } else if (action === 'peer_leave') {
-                cluster.processPeerLeave(hostName, request.getQuery('peer_id'));
-                response.end();
-            } else if (action === 'peer_message') {
-                // console.log(`receive node peer_message ${hostName}`);
-                readJson(response, (json => {
-                    cluster.processPeerMessage(hostName, json);
-                    response.end();
-                }), ()=> {
-                    console.error('readJson error');
-                    response.end();
-                })
-            } else if (action === 'ping') {
-                // console.log(`receive node ping ${hostName}`);
-                response.end();
-            } else if (action === 'register') {
-                // console.log(`receive node register ${hostName}`);
-                response.end();
-            } else {
-                console.log(`unknown action ${action}`);
-                const status = "404 Not Found";
-                response.writeStatus(status).end(status);
-                return;
-            }
-        }
-    ).get(
+    .get(
         "/info",
         (response: HttpResponse, request: HttpRequest) => {
             debugRequest(server, request);
@@ -337,42 +303,3 @@ async function run(): Promise<void> {
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 run();
 
-/* Helper function for reading a posted JSON body */
-function readJson(res: HttpResponse, cb: (json: any) => void, err: () => void) {
-    let buffer: Uint8Array;
-    /* Register data cb */
-    res.onData((ab: ArrayBuffer, isLast: boolean) => {
-        let chunk = Buffer.from(ab);
-        if (isLast) {
-            let json;
-            if (buffer) {
-                try {
-                    json = JSON.parse(Buffer.concat([buffer, chunk]).toString());
-                } catch (e) {
-                    /* res.close calls onAborted */
-                    res.close();
-                    return;
-                }
-                cb(json);
-            } else {
-                try {
-                    json = JSON.parse(chunk.toString());
-                } catch (e) {
-                    /* res.close calls onAborted */
-                    res.close();
-                    return;
-                }
-                cb(json);
-            }
-        } else {
-            if (buffer) {
-                buffer = Buffer.concat([buffer, chunk]);
-            } else {
-                buffer = Buffer.concat([chunk]);
-            }
-        }
-    });
-
-    /* Register error cb */
-    res.onAborted(err);
-}

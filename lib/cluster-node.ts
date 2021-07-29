@@ -15,10 +15,11 @@ export default class ClusterNode {
     }
 
     public async sendMsgPeerJoin(peerId: string) {
+        // console.log(`sendMsgPeerJoin ${this.joinUri}`)
         try {
             await fetch(`${this.joinUri}&peer_id=${peerId}`, {
                 method: 'POST',
-                timeout: 2000
+                timeout: 5000
             });
             // console.log(`${this.joinUri} statusCode ${response.status}`);
             // if (response.status) {
@@ -35,7 +36,7 @@ export default class ClusterNode {
         try {
             await fetch(`${this.leaveUri}&peer_id=${peerId}`, {
                 method: 'POST',
-                timeout: 2000
+                timeout: 5000
             });
             // console.log(`${this.joinUri} statusCode ${response.status}`);
             // if (response.status) {

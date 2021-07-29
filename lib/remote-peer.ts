@@ -17,7 +17,7 @@ export default class RemotePeer implements PeerContext {
         try {
             await fetch(address, {
                 method: 'POST',
-                timeout: 2000,
+                timeout: 5000,
                 body: JSON.stringify(json),
             });
             // console.log(`${ address} statusCode ${response.status}`);

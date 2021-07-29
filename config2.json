@@ -13,12 +13,12 @@
   "cluster": {
     "enabled": true,
     "ip": "127.0.0.1",
-    "port": 8001,
+    "port": 9001,
     "nodes": [
       {
         "enabled": true,
         "ip": "127.0.0.1",
-        "port": 8000
+        "port": 9000
       }
     ]
   }
