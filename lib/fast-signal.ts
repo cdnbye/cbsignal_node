@@ -65,7 +65,7 @@ export class FastSignal extends EventEmitter implements Signaling {
 
     public clearPeersFromNode(nodeId: string) {
         for (let [peerId, peer] of this.#peers) {
-            if (!peer.local && (peer as RemotePeer).host === nodeId) {
+            if (peer.remote && (peer as RemotePeer).host === nodeId) {
                 this.#peers.delete(peerId);
                 if (debugEnabled) {
                     debug(`delete remote peer ${peerId}`);
@@ -77,7 +77,6 @@ export class FastSignal extends EventEmitter implements Signaling {
 
     public processJoin(peerId: string, peer: PeerContext): void {
         peer.id = peerId;
-        peer.local = true;
         // const oldPeer = this.#peers.get(peerId);
         // if (oldPeer !== undefined) {
         //     if (debugEnabled) {
@@ -161,10 +160,10 @@ export class FastSignal extends EventEmitter implements Signaling {
                 if (peer.notFoundPeers.length > MAX_NOT_FOUND_PEERS_LIMIT) {
                     peer.notFoundPeers.shift();
                 }
-                if (peer.local) peer.sendMessage(json, peer);
+                if (!peer.remote) peer.sendMessage(json, peer);
             }
         } else {
-            if (toPeer.local) {
+            if (!toPeer.remote) {
                 delete json.to_peer_id;
             }
             json.from_peer_id = peer.id;
@@ -175,8 +174,8 @@ export class FastSignal extends EventEmitter implements Signaling {
                     peer.id,
                     "send signal to",
                     toPeerId,
-                    "local:",
-                    toPeer.local
+                    "remote:",
+                    toPeer.remote
                 );
             }
         }
@@ -203,7 +202,7 @@ export class FastSignal extends EventEmitter implements Signaling {
             if (toPeer.notFoundPeers === undefined) {
                 toPeer.notFoundPeers = [];
             }
-            if (toPeer.local) {
+            if (!toPeer.remote) {
                 delete json.to_peer_id;
             }
             if (!toPeer.notFoundPeers.includes(peer.id)) {
