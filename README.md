@@ -63,3 +63,7 @@ sudo npm install pm2 -g
 pm2 start pm2.config.js
 ```
 
+## Run with Docker
+```sh
+sudo docker run --name signal --net host  --restart=on-failure:3 -d  cdnbye/cbsignal_node:latest
+```

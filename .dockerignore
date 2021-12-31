@@ -1,0 +1,7 @@
+.github
+.DS_Store
+/.idea
+.gitignore
+.git
+LICENSE
+.editorconfig

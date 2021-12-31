@@ -21,10 +21,11 @@
     "signal",
     "cdnbye",
     "cbsignal",
-    "websockets"
+    "websockets",
+    "swarmcloud"
   ],
   "scripts": {
-    "start": "node ./dist/run-uws-signal.js",
+    "start": "node ./dist/run-uws-signal.js ./config/config.json",
     "compile": "tsc",
     "debug": "DEBUG=* node ./dist/run-uws-signal.js",
     "upgrade": "git pull && npm rum compile && pm2 restart pm2.config.js",

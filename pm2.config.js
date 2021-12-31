@@ -3,7 +3,7 @@ module.exports = {
         {
             name: "signal",
             script: "./dist/run-uws-signal.js",
-            args: "config.json",
+            args: "./config/config.json",
             max_memory_restart: "3700M",
         },
     ]

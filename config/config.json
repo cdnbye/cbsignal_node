@@ -1,7 +1,7 @@
 {
   "servers": [{
     "server": {
-      "port": 8000
+      "port": 80
     },
     "websockets": {
       "path": "/*",
