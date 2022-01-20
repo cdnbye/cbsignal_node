@@ -1,4 +1,4 @@
-FROM node:14.18-alpine
+FROM node:14.18-buster-slim
 
 #RUN npm install pm2 -g
 WORKDIR /cbsignal
