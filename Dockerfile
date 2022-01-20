@@ -1,4 +1,4 @@
-FROM node:lts-slim
+FROM node:14.18-alpine
 
 #RUN npm install pm2 -g
 WORKDIR /cbsignal
