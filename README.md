@@ -19,8 +19,8 @@ High performance CDNBye signaling service written in node.js
 Node.js 10+ is required.
 
 ```sh
-npm install
-npm run compile
+yarn install
+yarn run compile
 ```
 
 ## Run instructions
@@ -38,7 +38,7 @@ node dist/run-uws-signal.js [config.json]
 or
 
 ```sh
-npm start [config.json]
+yarn start [config.json]
 ```
 
 ## Configuration
@@ -59,11 +59,27 @@ DEBUG="*" node ./dist/run-uws-signal.js config.json
 
 ## Run with Daemon
 ```sh
-sudo npm install pm2 -g
+sudo yarn install pm2 -g
 pm2 start pm2.config.js
 ```
 
-## Run with Docker
+## Run by Docker
 ```sh
-sudo docker run --name signal --net host  --restart=on-failure:3 -d  cdnbye/cbsignal_node:latest
+sudo docker run --name signal --net host  --restart=on-failure:3 -d cdnbye/cbsignal_node:latest
 ```
+
+## Run by Docker with your own Config
+```sh
+mkdir config && cd config
+touch config.json
+```
+Then cony your config to config.json, you can copy your SSL cert to this directory, then:
+```sh
+sudo docker run --name cbsignal_node --net host  --restart=unless-stopped  -d -v "$(pwd)"/config:/cbsignal/config  cdnbye/cbsignal_node:latest
+```
+You can check the logs by run:
+```sh
+sudo docker logs cbsignal_node
+```
+
+

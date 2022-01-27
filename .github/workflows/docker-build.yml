@@ -1,5 +1,10 @@
 name: Docker image buildx and push
-on: [push]
+on:
+    push:
+        paths-ignore:
+            - README.md
+            - .gitignore
+            - LICENSE
 jobs:
     Docker-Build-Push:
         runs-on: ubuntu-latest
