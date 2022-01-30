@@ -5,10 +5,12 @@ export default class RemotePeer implements PeerContext {
     public readonly id: string;
     public readonly remote: boolean;
     public readonly host: string;
+    public readonly ts: number;
     public constructor(host: string, id: string) {
         this.id = id;
         this.remote = true;
         this.host = host;
+        this.ts = new Date().getTime();
     }
 
     public async sendMessage(json: object, peer: PeerContext, localHost?: string) {

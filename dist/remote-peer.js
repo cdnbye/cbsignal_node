@@ -6,6 +6,7 @@ class RemotePeer {
         this.id = id;
         this.remote = true;
         this.host = host;
+        this.ts = new Date().getTime();
     }
     async sendMessage(json, peer, localHost) {
         // console.log(`sendMessage to ${peer.id} host ${localHost}`);

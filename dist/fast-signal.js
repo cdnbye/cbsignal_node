@@ -16,9 +16,13 @@ const events_1 = require("events");
 // eslint-disable-next-line new-cap
 const debug = Debug("cbsignal:fast-signaler");
 const debugEnabled = debug.enabled;
-const SIGNAL_VERSION = "2.4.0";
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+const SIGNAL_VERSION = require('../package.json').version;
 const MAX_NOT_FOUND_PEERS_LIMIT = 3;
+const CHECK_CLIENT_INTERVAL = 15 * 60; // 单位：秒
+const EXPIRE_LIMIT = 12 * 60;
 class FastSignal extends events_1.EventEmitter {
+    // private readonly checkPeersTimer: NodeJS.Timeout;
     constructor(settings) {
         super();
         // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
@@ -27,6 +31,21 @@ class FastSignal extends events_1.EventEmitter {
         _peers.set(this, new Map());
         this.settings = Object.assign({ version: SIGNAL_VERSION }, settings);
         this.versionNum = this.getVersionNum(this.settings.version);
+        setInterval(() => {
+            const now = new Date().getTime();
+            let count = 0;
+            for (let [peerId, peer] of __classPrivateFieldGet(this, _peers)) {
+                if (now - peer.ts > EXPIRE_LIMIT * 1000) {
+                    peer.close();
+                    __classPrivateFieldGet(this, _peers).delete(peerId);
+                    count++;
+                }
+            }
+            if (count > 0) {
+                // eslint-disable-next-line no-console
+                console.info(`check client finished, closed ${count} clients`);
+            }
+        }, CHECK_CLIENT_INTERVAL * 1000);
     }
     getVersionNum(ver) {
         const digs = ver.split(".");
@@ -58,13 +77,7 @@ class FastSignal extends events_1.EventEmitter {
     }
     processJoin(peerId, peer) {
         peer.id = peerId;
-        // const oldPeer = this.#peers.get(peerId);
-        // if (oldPeer !== undefined) {
-        //     if (debugEnabled) {
-        //         debug("oldPeer !== undefined");
-        //     }
-        //     this.disconnectPeer(oldPeer);
-        // }
+        peer.ts = new Date().getTime();
         __classPrivateFieldGet(this, _peers).set(peerId, peer);
         peer.sendMessage({
             action: "ver",

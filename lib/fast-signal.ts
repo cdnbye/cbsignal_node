@@ -5,13 +5,19 @@ import * as Debug from "debug";
 import { Signaling, PeerContext, SignalError } from "./signaling";
 import RemotePeer from './remote-peer';
 import { EventEmitter } from 'events';
+import {WebSocket} from "uWebSockets.js";
+
 
 // eslint-disable-next-line new-cap
 const debug = Debug("cbsignal:fast-signaler");
 const debugEnabled = debug.enabled;
 
-const SIGNAL_VERSION = "2.4.0";
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+const SIGNAL_VERSION: string = require('../package.json').version;
 const MAX_NOT_FOUND_PEERS_LIMIT = 3;
+const CHECK_CLIENT_INTERVAL     = 15 * 60;        // 单位：秒
+const EXPIRE_LIMIT              = 12 * 60;
+
 
 interface UnknownObject {
     [key: string]: unknown;
@@ -30,6 +36,7 @@ export class FastSignal extends EventEmitter implements Signaling {
     readonly #peers = new Map<string, PeerContext>();
 
     private readonly versionNum: number;
+    // private readonly checkPeersTimer: NodeJS.Timeout;
 
     public constructor(settings?: Partial<Settings>) {
         super();
@@ -39,6 +46,21 @@ export class FastSignal extends EventEmitter implements Signaling {
         };
 
         this.versionNum = this.getVersionNum(this.settings.version);
+        setInterval(() => {
+            const now = new Date().getTime();
+            let count: number = 0;
+            for (let [peerId, peer] of this.#peers) {
+                if (now - peer.ts > EXPIRE_LIMIT * 1000) {
+                    (peer as unknown as WebSocket).close();
+                    this.#peers.delete(peerId);
+                    count++;
+                }
+            }
+            if (count > 0) {
+                // eslint-disable-next-line no-console
+                console.info(`check client finished, closed ${count} clients`);
+            }
+        }, CHECK_CLIENT_INTERVAL * 1000);
     }
 
     private getVersionNum(ver: string): number {
@@ -77,13 +99,7 @@ export class FastSignal extends EventEmitter implements Signaling {
 
     public processJoin(peerId: string, peer: PeerContext): void {
         peer.id = peerId;
-        // const oldPeer = this.#peers.get(peerId);
-        // if (oldPeer !== undefined) {
-        //     if (debugEnabled) {
-        //         debug("oldPeer !== undefined");
-        //     }
-        //     this.disconnectPeer(oldPeer);
-        // }
+        peer.ts = new Date().getTime();
 
         this.#peers.set(peerId, peer);
 
@@ -132,7 +148,7 @@ export class FastSignal extends EventEmitter implements Signaling {
         this.#peers.delete(peerId);
         peer.id = undefined;
 
-        this.emit('peer_leave', peerId)
+        this.emit('peer_leave', peerId);
     }
 
     private processSignal(json: UnknownObject, peer: PeerContext): void {

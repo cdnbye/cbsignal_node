@@ -162,6 +162,10 @@ export class UWebSocketsSignal {
                 },
                 message: this.onMessage,
                 close: this.onClose,
+                ping: (ws: WebSocket) => {
+                    const peer = ws as unknown as PeerContext;
+                    peer.ts = new Date().getTime();
+                },
             },
         );
     }

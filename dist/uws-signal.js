@@ -265,6 +265,10 @@ class UWebSocketsSignal {
             },
             message: this.onMessage,
             close: this.onClose,
+            ping: (ws) => {
+                const peer = ws;
+                peer.ts = new Date().getTime();
+            },
         });
     }
 }
