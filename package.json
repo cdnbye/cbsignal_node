@@ -38,7 +38,6 @@
   },
   "dependencies": {
     "@fidm/x509": "^1.2.1",
-    "@peculiar/x509": "^1.9.3",
     "debug": "^4.1.1",
     "limiter": "^2.1.0",
     "node-fetch": "^2.6.1",
