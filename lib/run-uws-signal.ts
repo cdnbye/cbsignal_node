@@ -7,6 +7,8 @@ import { UWebSocketsSignal } from "./uws-signal";
 import { FastSignal } from "./fast-signal";
 import { Signaling } from "./signaling";
 import Cluster from "./cluster";
+const { Certificate } = require('@fidm/x509')
+const fs = require('fs');
 
 // eslint-disable-next-line new-cap
 const debugRequests = Debug("cbsignal:uws-signaler-requests");
@@ -235,6 +237,16 @@ function buildServer(
             if (serverSettings.websockets && serverSettings.websockets.compression === true) {
                 compressionEnabled = true;
             }
+            // 解析pem
+            let certInfo;
+            if (serverSettings.server && serverSettings.server.cert_file_name) {
+                var caCert = fs.readFileSync(serverSettings.server.cert_file_name);
+                const issuer = Certificate.fromPEM(caCert)
+                certInfo = {
+                    name: issuer.subject.attributes[0].value,
+                    expire_at: issuer.validTo,
+                }
+            }
             response.
                 writeHeader("Content-Type", "application/json").
                 writeHeader("Access-Control-Allow-Origin", "*").
@@ -243,10 +255,19 @@ function buildServer(
                     current_connections: peersCount,
                     compression_enabled: compressionEnabled,
                     memory: process.memoryUsage(),
+                    cert_info: certInfo,
                 }));
         },
     ).get(
         "/count",
+        (response: HttpResponse, request: HttpRequest) => {
+            debugRequest(server, request);
+            response.
+            writeHeader("Access-Control-Allow-Origin", "*").
+            end(signaler.peers.size.toString());
+        }
+    ).get(
+        "/total_count",
         (response: HttpResponse, request: HttpRequest) => {
             debugRequest(server, request);
             response.

@@ -1,5 +1,6 @@
 /node_modules
 /dist
+/cert
 /test_dist
 /coverage
 /.nyc_output

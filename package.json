@@ -1,7 +1,7 @@
 {
   "name": "cbsignal_node",
   "description": "High performance CDNBye signaling service",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "license": "Apache-2.0",
   "author": "cdnbye",
   "homepage": "https://www.cdnbye.com",
@@ -37,6 +37,8 @@
     "url": "https://github.com/cdnbye/cbsignal_node.git"
   },
   "dependencies": {
+    "@fidm/x509": "^1.2.1",
+    "@peculiar/x509": "^1.9.3",
     "debug": "^4.1.1",
     "limiter": "^2.1.0",
     "node-fetch": "^2.6.1",
