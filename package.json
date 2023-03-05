@@ -1,7 +1,7 @@
 {
   "name": "cbsignal_node",
   "description": "High performance CDNBye signaling service",
-  "version": "2.5.2",
+  "version": "2.5.3",
   "license": "Apache-2.0",
   "author": "cdnbye",
   "homepage": "https://www.cdnbye.com",
