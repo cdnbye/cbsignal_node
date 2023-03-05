@@ -6,3 +6,4 @@
 /.nyc_output
 .DS_Store
 /.idea
+yarn-error.log
