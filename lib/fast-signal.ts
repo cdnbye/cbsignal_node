@@ -51,7 +51,7 @@ export class FastSignal extends EventEmitter implements Signaling {
             let count: number = 0;
             for (let [peerId, peer] of this.#peers) {
                 if (now - peer.ts > EXPIRE_LIMIT * 1000) {
-                    (peer as unknown as WebSocket).close();
+                    (peer as unknown as WebSocket<any>).close();
                     this.#peers.delete(peerId);
                     count++;
                 }

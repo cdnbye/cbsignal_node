@@ -11,7 +11,7 @@ module.exports = {
         "prefer-arrow"
     ],
     "extends": [
-        "eslint:all",
+        "eslint:recommended",
         "plugin:@typescript-eslint/all",
         "plugin:import/errors",
         "plugin:import/warnings",

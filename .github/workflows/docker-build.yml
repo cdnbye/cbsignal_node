@@ -34,4 +34,4 @@ jobs:
                 with:
                     push: true
                     platforms: linux/amd64
-                    tags: cdnbye/cbsignal_node:2.5.1
+                    tags: cdnbye/cbsignal_node:2.5.2

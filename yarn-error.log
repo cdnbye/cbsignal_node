@@ -1,0 +1,92 @@
+Arguments: 
+  /usr/local/bin/node /usr/local/bin/yarn add uWebSockets.js@uNetworking/uWebSockets.js#v20.19.0
+
+PATH: 
+  /Users/xieting/Desktop/Native_P2P/flutter/flutter/bin:/Library/Frameworks/Python.framework/Versions/3.8/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/go/bin:/Library/Apple/usr/bin:/Applications/Wireshark.app/Contents/MacOS:/Users/xieting/Desktop/CDNBye/opensource/cbsignal/node_modules/.bin:/usr/local/go/bin:/usr/local/mysql/bin
+
+Yarn version: 
+  1.17.3
+
+Node version: 
+  14.19.0
+
+Platform: 
+  darwin x64
+
+Trace: 
+  Error: ENOENT: no such file or directory, copyfile '/Users/xieting/Library/Caches/Yarn/v4/npm-shebang-command-1.2.0-44aac65b695b03398968c39f363fee5deafdf1ea/node_modules/shebang-command/index.js' -> '/Users/xieting/Desktop/CDNBye/opensource/cbsignal/node_modules/eslint/node_modules/shebang-command/index.js'
+
+npm manifest: 
+  {
+    "name": "cbsignal_node",
+    "description": "High performance CDNBye signaling service",
+    "version": "2.5.1",
+    "license": "Apache-2.0",
+    "author": "cdnbye",
+    "homepage": "https://www.cdnbye.com",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "engines": {
+      "node": ">=10.0.0"
+    },
+    "bin": {
+      "cbsignal": "./bin/cbsignal"
+    },
+    "keywords": [
+      "p2p",
+      "peer-to-peer",
+      "webrtc",
+      "swarmcloud",
+      "signal",
+      "cdnbye",
+      "cbsignal",
+      "websockets",
+      "swarmcloud"
+    ],
+    "scripts": {
+      "start": "node ./dist/run-uws-signal.js ./config/config.json",
+      "compile": "tsc",
+      "debug": "DEBUG=* node ./dist/run-uws-signal.js",
+      "upgrade": "git pull && npm rum compile && pm2 restart pm2.config.js",
+      "clean": "rimraf dist",
+      "watch": "tsc --watch"
+    },
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/cdnbye/cbsignal_node.git"
+    },
+    "dependencies": {
+      "@fidm/x509": "^1.2.1",
+      "debug": "^4.1.1",
+      "limiter": "^2.1.0",
+      "node-fetch": "^2.6.1",
+      "uWebSockets.js": "github:uNetworking/uWebSockets.js#v19.3.0"
+    },
+    "devDependencies": {
+      "@types/chai": "^4.2.11",
+      "@types/debug": "^4.1.5",
+      "@types/mocha": "^7.0.2",
+      "@types/node": "^13.13.4",
+      "@types/node-fetch": "^2.5.12",
+      "@types/ws": "^7.2.4",
+      "@typescript-eslint/eslint-plugin": "^2.30.0",
+      "@typescript-eslint/parser": "^2.30.0",
+      "chai": "^4.2.0",
+      "coveralls": "^3.1.0",
+      "eslint": "^6.8.0",
+      "eslint-plugin-import": "^2.20.2",
+      "eslint-plugin-prefer-arrow": "^1.2.0",
+      "mocha": "^7.1.2",
+      "nyc": "^15.0.1",
+      "rimraf": "^3.0.2",
+      "ts-mockito": "^2.5.0",
+      "typescript": "^3.8.3",
+      "ws": "^7.2.5"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile

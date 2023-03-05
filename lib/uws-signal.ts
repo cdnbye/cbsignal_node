@@ -4,7 +4,7 @@ import { StringDecoder } from "string_decoder";
 import { App, SSLApp, WebSocket, us_socket_context_t, HttpResponse, HttpRequest, TemplatedApp, SHARED_COMPRESSOR, DISABLED } from "uWebSockets.js";
 import * as Debug from "debug";
 import { Signaling, SignalError, PeerContext } from "./signaling";
-import { ServerSettings, WebSocketsSettings, WebSocketsAccessSettings } from "./run-uws-signal";
+import {ServerSettings, WebSocketsSettings, WebSocketsAccessSettings} from "./run-uws-signal";
 const crypto = require('crypto');
 import { RateLimiter } from "limiter";
 
@@ -155,14 +155,14 @@ export class UWebSocketsSignal {
                 idleTimeout: this.settings.websockets.idleTimeout,
                 upgrade: this.onUpgrade,
                 open: this.onOpen,
-                drain: (ws: WebSocket) => {
+                drain: (ws: WebSocket<any>) => {
                     if (debugWebSocketsEnabled) {
                         debugWebSockets("drain", ws.getBufferedAmount());
                     }
                 },
                 message: this.onMessage,
                 close: this.onClose,
-                ping: (ws: WebSocket) => {
+                ping: (ws: WebSocket<any>) => {
                     const peer = ws as unknown as PeerContext;
                     peer.ts = new Date().getTime();
                 },
@@ -208,11 +208,11 @@ export class UWebSocketsSignal {
 
     };
 
-    private readonly onOpen = (ws: WebSocket): void => {
+    private readonly onOpen = (ws: WebSocket<any>): void => {
         this.webSocketsCount++;
-        const url = ws.url;
-        const origin = ws.origin;
-        const query = ws.query;
+        const url = (ws as any).url;
+        const origin = (ws as any).origin;
+        const query = (ws as any).query;
         if (debugRequestsEnabled) debugRequests("ws query id", query.id, "token", query.token);
 
         // token
@@ -333,8 +333,8 @@ export class UWebSocketsSignal {
             );
         }
 
-        if (ws.sendMessage === undefined) {
-            ws.sendMessage = sendMessage;
+        if ((ws as any).sendMessage === undefined) {
+            (ws as any).sendMessage = sendMessage;
         }
 
         try {
@@ -350,7 +350,7 @@ export class UWebSocketsSignal {
 
     };
 
-    private readonly onMessage = (ws: WebSocket, message: ArrayBuffer): void => {
+    private readonly onMessage = (ws: WebSocket<any>, message: ArrayBuffer): void => {
         debugWebSockets("message of size", message.byteLength);
 
         let json: object | undefined = undefined;
@@ -365,7 +365,7 @@ export class UWebSocketsSignal {
         if (debugMessagesEnabled) {
             debugMessages(
                 "in",
-                (ws.id === undefined) ? "unknown peer" : ws.id,
+                ((ws as any).id === undefined) ? "unknown peer" : (ws as any).id,
                 json,
             );
         }
@@ -382,11 +382,11 @@ export class UWebSocketsSignal {
         }
     };
 
-    private readonly onClose = (ws: WebSocket, code: number): void => {
+    private readonly onClose = (ws: WebSocket<any>, code: number): void => {
         debugWebSockets("onClose ", code);
         this.webSocketsCount--;
 
-        if (ws.sendMessage !== undefined) {
+        if ((ws as any).sendMessage !== undefined) {
             this.signaler.disconnectPeer(ws as unknown as PeerContext);
         }
 
@@ -394,12 +394,12 @@ export class UWebSocketsSignal {
     };
 }
 
-function sendMessage(json: object, ws: WebSocket): void {
+function sendMessage(json: object, ws: WebSocket<any>): void {
     ws.send(JSON.stringify(json), false, false);
     if (debugMessagesEnabled) {
         debugMessages(
             "out",
-            (ws.id === undefined) ? "unknown peer" : ws.id,
+            ((ws as any).id === undefined) ? "unknown peer" : (ws as any).id,
             json,
         );
     }
